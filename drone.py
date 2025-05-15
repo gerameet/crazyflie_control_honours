@@ -291,6 +291,40 @@ class Drone:
             # Stop any movement
             mc.stop()
 
+    def perform_v_shaped_trajectory(self, amplitude, time_period, total_time):
+        """
+        Command the drone to perform a V-shaped trajectory.
+
+        :param amplitude: The amplitude of the motion in meters.
+        :param time_period: The time period of the motion in seconds.
+        :param total_time: The total duration to perform the motion in seconds.
+        """
+        # Calculate the angular frequency
+        omega = 2 * math.pi / time_period
+
+        with MotionCommander(self.scf, default_height=DEFAULT_HEIGHT) as mc:
+            # Record the start time of the motion
+            start_time = time.time()
+            while True:
+                # Calculate elapsed time
+                elapsed_time = time.time() - start_time
+                if elapsed_time >= total_time:
+                    break
+
+                # Calculate position and velocity based on V-shaped trajectory equations
+                x_position = amplitude * math.sin(omega * elapsed_time)
+                y_position = amplitude * math.cos(omega * elapsed_time)
+
+                # Use the position to command the drone's movement
+                mc.move_distance(x_position, y_position, 0)
+
+                # Sleep to maintain control update rate
+                time.sleep(0.1)
+
+            # Stop any movement
+            mc.stop()
+
+
     def perform_custom_trajectory(self, waypoints):
         """
         Command the drone to follow a custom trajectory defined by waypoints.
@@ -388,11 +422,47 @@ class Drone:
             if flight_function is not None:
                 flight_function(**kwargs)
 
+def interactive_control(self):
+    """
+    Allows real-time control of the drone by entering commands in the terminal.
+    Available commands: takeoff, land, linear, square, fancy, circle, shm, quit
+    """
+    print(
+        COLORS[self.id]
+        + f"[{self.id}] Enter commands: takeoff, land, linear, square, fancy, circle, shm, quit"
+        + Style.RESET_ALL
+    )
+    with SyncCrazyflie(self.uri, cf=Crazyflie(rw_cache="./cache")) as scf:
+        self.scf = scf
+        while True:
+            cmd = input("Command: ").strip().lower()
+            if cmd == "takeoff":
+                self.take_off()
+            elif cmd == "land":
+                print("Landing...")
+                # You can implement a land method if needed, or just stop all motion
+            elif cmd == "linear":
+                self.move_linear()
+            elif cmd == "square":
+                self.move_square()
+            elif cmd == "fancy":
+                self.move_fancy_square()
+            elif cmd == "circle":
+                self.move_circle()
+            elif cmd == "shm":
+                # Example parameters, you can prompt for these if you want
+                self.perform_shm(amplitude=0.5, time_period=2.0, total_time=6.0)
+            elif cmd == "quit":
+                print("Exiting control loop.")
+                break
+            else:
+                print("Unknown command.")
+    
+
 if __name__ == "__main__":
     # Create an instance of the Drone class
     drone = Drone()
 
-    # Examples of how to use the Drone class methods
     # To take off and hover
     # drone.main(drone.take_off)
 
